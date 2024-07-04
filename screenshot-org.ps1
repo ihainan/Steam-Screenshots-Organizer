@@ -27,7 +27,7 @@ function RemoveInvalidFileNameChars {
     $regexPattern = [String]::Join('|', ($invalidChars | ForEach-Object { [Regex]::Escape($_) }))
 
     # 使用正则表达式替换无效字符为空字符串
-    $cleanString = [Regex]::Replace($inputString, $regexPattern, '')
+    $cleanString = [Regex]::Replace($inputString, $regexPattern, '').Trim()
 
     return $cleanString
 }
@@ -45,7 +45,7 @@ function Import-SteamAppListFile {
     Write-Output "Parsing the $gameListFilePath file"
     $jsonContent = Get-Content -Path $gameListFilePath -Raw | ConvertFrom-Json
     foreach ($app in $jsonContent.applist.apps) {
-        $appMap[$app.appid.ToString()] = $app.name
+        $appMap[$app.appid.ToString().Trim()] = $app.name
     }
 
     # 部分名字过长或者包含特殊字符的 app，需要做特殊处理
@@ -80,8 +80,8 @@ function Move-SteamScreenshots {
             if ($file.Name -match "^(\d+)_") {
                 $appId = $matches[1]
                 if (-not $appMap.ContainsKey($appId)) {
-                    # ID 长度为 7，说明 app 为 Steam 商店 app 而非手工添加的 Steam 外 app
-                    if ($appId.Length -eq 7) {
+                    # ID 长度小于等于 7，说明 app 为 Steam 商店 app 而非手工添加的 Steam 外 app
+                    if ($appId.Length -le 7) {
                         $willRefreshAppList = $true
                     }
                 }
@@ -115,8 +115,8 @@ function Move-SteamScreenshots {
                 }        
                 
                 # 将文件移到游戏对应的目录中
-                Write-Output "Moving $($file.Name) to $dirPath"
                 $newFilePath = Join-Path -Path $dirPath -ChildPath $file.Name
+                Write-Output "Moving $($file.FullName) to $newFilePath"
                 Move-Item -Path $file.FullName -Destination $newFilePath -Force        
             }
         }
