@@ -27,7 +27,7 @@ function RemoveInvalidFileNameChars {
     $regexPattern = [String]::Join('|', ($invalidChars | ForEach-Object { [Regex]::Escape($_) }))
 
     # 使用正则表达式替换无效字符为空字符串
-    $cleanString = [Regex]::Replace($inputString, $regexPattern, '').Trim()
+    $cleanString = [Regex]::Replace($inputString, $regexPattern, '')
 
     return $cleanString
 }
@@ -45,7 +45,8 @@ function Import-SteamAppListFile {
     Write-Output "Parsing the $gameListFilePath file"
     $jsonContent = Get-Content -Path $gameListFilePath -Raw | ConvertFrom-Json
     foreach ($app in $jsonContent.applist.apps) {
-        $appMap[$app.appid.ToString().Trim()] = $app.name
+        # 部分游戏名存在多余空格，创建目录时候空格会被自动删除，但是移动目录时候则不会被自动处理
+        $appMap[$app.appid.ToString().Trim()] = $app.name.Trim()
     }
 
     # 部分名字过长或者包含特殊字符的 app，需要做特殊处理
