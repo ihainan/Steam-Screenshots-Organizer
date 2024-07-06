@@ -29,6 +29,12 @@ function RemoveInvalidFileNameChars {
     # 使用正则表达式替换无效字符为空字符串
     $cleanString = [Regex]::Replace($inputString, $regexPattern, '')
 
+    # 删除末尾的 .，因为创建目录的时候会把 . 去掉，但是删除的时候却不会
+    $cleanString = $cleanString -replace '\.*$'
+
+    # 最后再做一次 Trim
+    $cleanString = $cleanString.Trim()
+
     return $cleanString
 }
 
@@ -105,11 +111,11 @@ function Move-SteamScreenshots {
                     $cleanAppName = RemoveInvalidFileNameChars -inputString $appName
                     $dirPath = Join-Path -Path . -ChildPath $cleanAppName
                 } else {
-                    $dirPath = Join-Path -Path . -ChildPath "Uncategorized Screenshots"
+                    $dirPath = Join-Path -Path . -ChildPath $uncategorizedFolder
                 }
                 
                 # 如果目录不存在则创建
-                if (-not (Test-Path -Path $dirPath)) {
+                if (-not (Test-Path -LiteralPath $dirPath)) {
                     Write-Output "Creating directory $dirPath"
                     New-Item -Path $dirPath -ItemType Directory
                     Write-Output "Directory $dirPath created"
@@ -118,7 +124,7 @@ function Move-SteamScreenshots {
                 # 将文件移到游戏对应的目录中
                 $newFilePath = Join-Path -Path $dirPath -ChildPath $file.Name
                 Write-Output "Moving $($file.FullName) to $newFilePath"
-                Move-Item -Path $file.FullName -Destination $newFilePath -Force        
+                Move-Item -LiteralPath $file.FullName -Destination $newFilePath -Force        
             }
         }
     }
